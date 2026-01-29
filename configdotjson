@@ -1,0 +1,8 @@
+{
+  "openrouter": {
+    "api_key": "",
+    "model": "",
+    "temperature": 0.7,
+    "max_tokens": 6000
+  }
+}

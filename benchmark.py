@@ -8,10 +8,9 @@ import os
 import re
 import time
 from dataclasses import dataclass, asdict
-from typing import List, Optional
+from typing import List
 
 import numpy as np
-import requests
 
 from conway import (
     next_state,
@@ -21,15 +20,7 @@ from conway import (
     calculate_accuracy,
     is_perfect_match,
 )
-
-
-@dataclass
-class BenchmarkConfig:
-    """Configuration for the LLM benchmark."""
-    api_key: str
-    model: str
-    temperature: float
-    max_tokens: int
+from api import LLMProvider, load_config, create_provider
 
 
 @dataclass
@@ -58,29 +49,6 @@ class BenchmarkResult:
     total_tests: int
 
 
-def load_config(config_path: str = "config.json") -> BenchmarkConfig:
-    """
-    Load LLM configuration from a JSON file.
-
-    Args:
-        config_path: Path to the configuration file
-
-    Returns:
-        BenchmarkConfig object with API settings
-    """
-    with open(config_path, "r") as f:
-        config_data = json.load(f)
-
-    openrouter_config = config_data.get("openrouter", {})
-
-    return BenchmarkConfig(
-        api_key=openrouter_config.get("api_key", ""),
-        model=openrouter_config.get("model", "anthropic/claude-3.5-sonnet"),
-        temperature=openrouter_config.get("temperature", 0.0),
-        max_tokens=openrouter_config.get("max_tokens", 1000),
-    )
-
-
 def build_prompt(board_ascii: str) -> str:
     """
     Build the prompt for the LLM.
@@ -105,47 +73,6 @@ Current board state:
 ```
 
 Provide only the next generation board in the same ASCII format, with no additional explanation. Use '#' for live cells and '.' for dead cells."""
-
-
-def query_llm(prompt: str, config: BenchmarkConfig) -> str:
-    """
-    Query the LLM via OpenRouter API.
-
-    Args:
-        prompt: The prompt to send to the LLM
-        config: Benchmark configuration with API settings
-
-    Returns:
-        The LLM's response as a string
-    """
-    if not config.api_key:
-        raise ValueError("API key is required. Set it in config.json.")
-
-    headers = {
-        "Authorization": f"Bearer {config.api_key}",
-        "Content-Type": "application/json",
-    }
-
-    data = {
-        "model": config.model,
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": config.temperature,
-        "max_tokens": config.max_tokens,
-    }
-
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers=headers,
-        json=data,
-        timeout=60,
-    )
-
-    response.raise_for_status()
-    response_data = response.json()
-
-    return response_data["choices"][0]["message"]["content"]
 
 
 def extract_board_from_response(response: str) -> str:
@@ -184,7 +111,7 @@ def run_single_test(
     cols: int,
     difficulty: str,
     seed: int,
-    config: BenchmarkConfig,
+    provider: LLMProvider,
 ) -> TestResult:
     """
     Run a single test case.
@@ -194,7 +121,7 @@ def run_single_test(
         cols: Number of columns in the board
         difficulty: Difficulty label for this test
         seed: Random seed for reproducibility
-        config: Benchmark configuration
+        provider: LLM provider for querying
 
     Returns:
         TestResult with all metrics
@@ -209,13 +136,13 @@ def run_single_test(
 
     # Build prompt and query LLM
     prompt = build_prompt(board_ascii)
+    response = provider.query(prompt)
 
-    start_time = time.time()
-    try:
-        raw_response = query_llm(prompt, config)
-    except requests.exceptions.RequestException as e:
-        raw_response = f"ERROR: {str(e)}"
-    response_time = time.time() - start_time
+    if response.error:
+        raw_response = f"ERROR: {response.error}"
+    else:
+        raw_response = response.content
+    response_time = response.response_time
 
     # Extract predicted board
     predicted_ascii = extract_board_from_response(raw_response)
@@ -257,6 +184,7 @@ def run_benchmark(
         BenchmarkResult with all test results
     """
     config = load_config(config_path)
+    provider = create_provider(config)
 
     test_cases = [
         (3, 3, "Easy", 42),
@@ -279,7 +207,7 @@ def run_benchmark(
     for rows, cols, difficulty, seed in test_cases:
         print(f"Running {difficulty} test ({rows}x{cols}, seed={seed})...", end=" ")
 
-        result = run_single_test(rows, cols, difficulty, seed, config)
+        result = run_single_test(rows, cols, difficulty, seed, provider)
         results.append(result)
 
         status = "✓" if result.perfect_match else "✗"
