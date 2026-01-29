@@ -31,7 +31,7 @@ Core Conway's Game of Life implementation:
 ### api.py
 LLM provider abstraction:
 - `LLMConfig` - Dataclass with: api_key, model, temperature, max_tokens, reasoning_effort
-- `LLMResponse` - Dataclass with: content, model, response_time, error
+- `LLMResponse` - Dataclass with: content, model, response_time, cost, error
 - `OpenRouterProvider` - Implements API calls to OpenRouter
 - `load_config(path)` - Loads config.json
 - `create_provider(config)` - Factory function for providers
@@ -43,18 +43,20 @@ Test execution and scoring:
 - `build_prompt(board_ascii)` - Constructs the LLM prompt with rules and instructions
 - `extract_board_from_response(response)` - Parses LLM output, extracts from code blocks
 - `run_single_test(rows, cols, difficulty, seed, provider)` - Runs one test case
-- `run_benchmark(config_path, output_path)` - Runs full test suite (9 cases)
+- `run_benchmark(config_path, output_path)` - Runs full simple test suite (9 cases)
+- `run_advanced_benchmark(tests_path, config_path, output_path)` - Runs advanced tests from a txt file
 - `print_detailed_results(result)` - Displays results with diff on failures
 
 **Prompt design**: The prompt encourages step-by-step reasoning and requests the final board in a code block. The extractor takes the LAST code block found, so reasoning output doesn't interfere.
 
 ### main.py
 Interactive menu-driven CLI:
-1. Run single test (choose difficulty + seed)
-2. Run full benchmark
+1. Run simple test (choose difficulty + seed)
+2. Run simple benchmark
 3. Preview test case (no LLM call)
-4. Show configuration
-5. Exit
+4. Run advanced benchmark (from txt file)
+5. Show configuration
+6. Exit
 
 ## Configuration
 
@@ -81,6 +83,21 @@ Interactive menu-driven CLI:
 | Medium     | 5x5       | 42, 43, 44 |
 | Hard       | 8x8       | 42, 43 |
 | Expert     | 10x10     | 42, 43 |
+
+### Advanced Tests
+
+Advanced tests are loaded from a text file, one test per line:
+
+```
+<grid_size> <density>
+```
+
+Example:
+```
+4 0.5
+6 0.25
+10 0.3
+```
 
 ## Running the Benchmark
 
@@ -127,4 +144,6 @@ Set `reasoning_effort` in config.json to "high", "medium", "low", or remove for 
    - Lines containing only `.` and `#`
    - Falls back to full response
 4. **Scoring**: Cell-by-cell accuracy + perfect match boolean
-5. **Seeds**: Fixed seeds ensure reproducible test cases across runs
+5. **Points**: Perfect match only; points = grid_size * grid_size
+6. **Cost**: Per-test cost from OpenRouter response (when available), summed across the run
+7. **Seeds**: Fixed seeds ensure reproducible test cases across runs

@@ -28,6 +28,7 @@ class LLMResponse:
     content: str
     model: str
     response_time: float
+    cost: Optional[float] = None
     error: Optional[str] = None
 
 
@@ -88,6 +89,7 @@ class OpenRouterProvider(LLMProvider):
             "messages": [{"role": "user", "content": prompt}],
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
+            "usage": {"include": True},
         }
 
         # Add reasoning parameter if configured
@@ -107,12 +109,18 @@ class OpenRouterProvider(LLMProvider):
             response.raise_for_status()
             response_data = response.json()
             content = response_data["choices"][0]["message"]["content"]
+            cost = None
+            usage = response_data.get("usage")
+            if isinstance(usage, dict) and isinstance(usage.get("cost"), (int, float)):
+                cost = float(usage["cost"])
             error = None
         except requests.exceptions.RequestException as e:
             content = ""
+            cost = None
             error = str(e)
         except (KeyError, IndexError) as e:
             content = ""
+            cost = None
             error = f"Invalid response format: {e}"
 
         response_time = time.time() - start_time
@@ -121,6 +129,7 @@ class OpenRouterProvider(LLMProvider):
             content=content,
             model=self.config.model,
             response_time=response_time,
+            cost=cost,
             error=error,
         )
 

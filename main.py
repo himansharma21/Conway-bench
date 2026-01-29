@@ -10,6 +10,7 @@ from api import load_config, create_provider
 from benchmark import (
     run_benchmark,
     run_advanced_benchmark,
+    load_advanced_test_cases,
     run_single_test,
     build_prompt,
     extract_board_from_response,
@@ -216,6 +217,21 @@ def run_advanced_benchmark_interactive():
         input("\nPress Enter to continue...")
         return
 
+    try:
+        test_cases = load_advanced_test_cases(tests_path)
+    except Exception as e:
+        print(f"Error loading advanced tests: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\nTest summary:")
+    total_points = 0
+    for idx, (size, density) in enumerate(test_cases, 1):
+        points = size * size
+        total_points += points
+        print(f"  {idx}. size={size}x{size}, density={density}, points={points}")
+    print(f"Total possible points: {total_points}")
+
     print(f"Model: {config.model}")
     confirm = input("\nProceed? (y/n): ").strip().lower()
 
@@ -226,7 +242,7 @@ def run_advanced_benchmark_interactive():
 
     print()
     try:
-        result = run_advanced_benchmark(tests_path=tests_path)
+        result = run_advanced_benchmark(tests_path=tests_path, show_summary=False)
     except Exception as e:
         print(f"Error running advanced benchmark: {e}")
         input("\nPress Enter to continue...")

@@ -38,6 +38,7 @@ class TestResult:
     perfect_match: bool
     points_awarded: int
     max_points: int
+    cost: float
     response_time: float
     raw_response: str
 
@@ -53,6 +54,7 @@ class BenchmarkResult:
     total_tests: int
     points_earned: int
     max_points: int
+    total_cost: float
     test_type: str
 
 
@@ -157,6 +159,7 @@ def run_advanced_benchmark(
     tests_path: str,
     config_path: str = "config.json",
     output_path: str = "results.json",
+    show_summary: bool = True,
 ) -> BenchmarkResult:
     """
     Run the advanced benchmark suite from a text file.
@@ -169,7 +172,12 @@ def run_advanced_benchmark(
 
     print(f"Running advanced benchmark with model: {config.model}")
     print(f"Test cases: {len(test_cases)}")
-    print("-" * 50)
+    if show_summary:
+        print("Test summary:")
+        for idx, (size, density) in enumerate(test_cases, 1):
+            points = size * size
+            print(f"  {idx}. size={size}x{size}, density={density}, points={points}")
+        print("-" * 50)
 
     for idx, (size, density) in enumerate(test_cases, 1):
         seed = 42 + idx
@@ -194,6 +202,7 @@ def run_advanced_benchmark(
     perfect_matches = sum(1 for r in results if r.perfect_match)
     points_earned = sum(r.points_awarded for r in results)
     max_points = sum(r.max_points for r in results)
+    total_cost = sum(r.cost for r in results)
 
     benchmark_result = BenchmarkResult(
         model=config.model,
@@ -204,6 +213,7 @@ def run_advanced_benchmark(
         total_tests=len(results),
         points_earned=points_earned,
         max_points=max_points,
+        total_cost=total_cost,
         test_type="Advanced",
     )
 
@@ -213,6 +223,7 @@ def run_advanced_benchmark(
     print(f"Overall accuracy: {overall_accuracy:.2%}")
     print(f"Perfect matches: {perfect_matches}/{len(results)}")
     print(f"Points: {points_earned}/{max_points}")
+    print(f"Total cost: ${total_cost:.4f}")
     print(f"Results saved to: {output_path}")
 
     return benchmark_result
@@ -257,6 +268,7 @@ def run_single_test(
     else:
         raw_response = response.content
     response_time = response.response_time
+    cost = response.cost if response.cost is not None else 0.0
 
     # Extract predicted board
     predicted_ascii = extract_board_from_response(raw_response)
@@ -284,6 +296,7 @@ def run_single_test(
         perfect_match=perfect,
         points_awarded=points_awarded,
         max_points=max_points,
+        cost=cost,
         response_time=response_time,
         raw_response=raw_response,
     )
@@ -338,6 +351,7 @@ def run_benchmark(
     perfect_matches = sum(1 for r in results if r.perfect_match)
     points_earned = sum(r.points_awarded for r in results)
     max_points = sum(r.max_points for r in results)
+    total_cost = sum(r.cost for r in results)
 
     benchmark_result = BenchmarkResult(
         model=config.model,
@@ -348,6 +362,7 @@ def run_benchmark(
         total_tests=len(results),
         points_earned=points_earned,
         max_points=max_points,
+        total_cost=total_cost,
         test_type="Simple",
     )
 
@@ -358,6 +373,7 @@ def run_benchmark(
     print(f"Overall accuracy: {overall_accuracy:.2%}")
     print(f"Perfect matches: {perfect_matches}/{len(results)}")
     print(f"Points: {points_earned}/{max_points}")
+    print(f"Total cost: ${total_cost:.4f}")
     print(f"Results saved to: {output_path}")
 
     return benchmark_result
@@ -389,6 +405,7 @@ def print_detailed_results(result: BenchmarkResult) -> None:
     print(f"Test type: {result.test_type}")
     print(f"Timestamp: {result.timestamp}")
     print(f"Points: {result.points_earned}/{result.max_points}")
+    print(f"Total cost: ${result.total_cost:.4f}")
     print("=" * 70)
 
     for i, r in enumerate(result.results, 1):
@@ -397,6 +414,7 @@ def print_detailed_results(result: BenchmarkResult) -> None:
         print(f"  Cell accuracy: {r.cell_accuracy:.2%}")
         print(f"  Perfect match: {r.perfect_match}")
         print(f"  Points: {r.points_awarded}/{r.max_points}")
+        print(f"  Cost: ${r.cost:.4f}")
         print(f"  Response time: {r.response_time:.2f}s")
 
         if not r.perfect_match:

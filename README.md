@@ -133,6 +133,7 @@ Notes:
 - **Perfect Match**: Binary score for exact board match
 - **Response Time**: How long the LLM took to respond
 - **Points (Advanced + Simple)**: Points awarded only for perfect matches, equal to `grid_size * grid_size`
+- **Cost**: Per-test cost from OpenRouter response (when available), summed across the run
 
 ## File Structure
 
