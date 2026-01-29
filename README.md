@@ -52,9 +52,19 @@ python benchmark.py
 
 This will:
 1. Load LLM configuration from `config.json`
-2. Run test cases across multiple difficulty levels (Easy, Medium, Hard, Expert)
+2. Run simple test cases across multiple difficulty levels (Easy, Medium, Hard, Expert)
 3. Display results with cell accuracy and response times
 4. Save detailed results to `results.json`
+
+### Run the Interactive CLI
+
+```bash
+python main.py
+```
+
+From the CLI you can run:
+- Simple test / simple benchmark (built-in difficulty set)
+- Advanced benchmark from a txt file
 
 ### Run Unit Tests
 
@@ -87,7 +97,9 @@ See [OpenRouter models](https://openrouter.ai/models) for the full list.
 
 ## Test Cases
 
-The benchmark includes test cases of varying difficulty:
+### Simple Tests
+
+The simple benchmark includes test cases of varying difficulty:
 
 | Difficulty | Grid Size | Description |
 |------------|-----------|-------------|
@@ -96,19 +108,41 @@ The benchmark includes test cases of varying difficulty:
 | Hard | 8x8 | Many cell interactions |
 | Expert | 10x10 | Large-scale pattern tracking |
 
+### Advanced Tests
+
+Advanced tests are loaded from a text file, one test per line:
+
+```
+<grid_size> <density>
+```
+
+Example:
+```
+4 0.5
+6 0.25
+10 0.3
+```
+
+Notes:
+- `grid_size` is a single integer (e.g., `4` means a 4x4 grid)
+- `density` is the probability of a cell being alive (0.0 to 1.0)
+
 ## Scoring Metrics
 
 - **Cell Accuracy**: Percentage of cells correctly predicted
 - **Perfect Match**: Binary score for exact board match
 - **Response Time**: How long the LLM took to respond
+- **Points (Advanced + Simple)**: Points awarded only for perfect matches, equal to `grid_size * grid_size`
 
 ## File Structure
 
 ```
 conway-bench/
 ├── config.json          # LLM configuration (API key, model, etc.)
+├── api.py               # LLM provider abstraction
 ├── conway.py            # Core Game of Life implementation
 ├── benchmark.py         # LLM benchmark runner
+├── main.py              # Interactive CLI
 ├── test_conway.py       # Unit tests
 ├── requirements.txt     # Python dependencies
 ├── PROPOSAL.md          # Design specification
@@ -129,6 +163,7 @@ conway-bench/
 ### `benchmark.py`
 
 - `run_benchmark()` - Run the full benchmark suite
+- `run_advanced_benchmark()` - Run advanced tests from a txt file
 - `load_config()` - Load configuration from `config.json`
 - `query_llm(prompt)` - Send query to LLM via OpenRouter
 
