@@ -1,0 +1,4 @@
+model,correct_tests,completion_tokens_total,total_tokens_total,total_cost,points_earned,max_points,time_seconds
+deepseek/deepseek-v3.2,1:4x4@0.25;2:4x4@0.5;3:5x5@0.25,10464,11280,0.00418848,57,82,1151.6507761478424
+z-ai/glm-4.7-flash,,17038,17746,0.0068638,0,82,332.51165080070496
+google/gemini-3-flash-preview,1:4x4@0.25;2:4x4@0.5;3:5x5@0.25;4:5x5@0.5,23097,23824,0.0696545,82,82,128.21072936058044
