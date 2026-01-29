@@ -39,6 +39,9 @@ class TestResult:
     points_awarded: int
     max_points: int
     cost: float
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
     response_time: float
     raw_response: str
 
@@ -269,6 +272,9 @@ def run_single_test(
         raw_response = response.content
     response_time = response.response_time
     cost = response.cost if response.cost is not None else 0.0
+    prompt_tokens = response.prompt_tokens if response.prompt_tokens is not None else 0
+    completion_tokens = response.completion_tokens if response.completion_tokens is not None else 0
+    total_tokens = response.total_tokens if response.total_tokens is not None else 0
 
     # Extract predicted board
     predicted_ascii = extract_board_from_response(raw_response)
@@ -297,6 +303,9 @@ def run_single_test(
         points_awarded=points_awarded,
         max_points=max_points,
         cost=cost,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
         response_time=response_time,
         raw_response=raw_response,
     )
