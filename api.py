@@ -19,6 +19,7 @@ class LLMConfig:
     model: str
     temperature: float = 0.0
     max_tokens: int = 1000
+    reasoning_effort: Optional[str] = None  # "high", "medium", "low", or None
 
 
 @dataclass
@@ -89,13 +90,19 @@ class OpenRouterProvider(LLMProvider):
             "max_tokens": self.config.max_tokens,
         }
 
+        # Add reasoning parameter if configured
+        if self.config.reasoning_effort:
+            data["reasoning"] = {"effort": self.config.reasoning_effort}
+
         start_time = time.time()
         try:
+            # Longer timeout when reasoning is enabled
+            timeout = 180 if self.config.reasoning_effort else 60
             response = requests.post(
                 self.API_URL,
                 headers=self._get_headers(),
                 json=data,
-                timeout=60,
+                timeout=timeout,
             )
             response.raise_for_status()
             response_data = response.json()
@@ -157,6 +164,7 @@ def load_config(config_path: str = "config.json") -> LLMConfig:
         model=openrouter_config.get("model", "anthropic/claude-3.5-sonnet"),
         temperature=openrouter_config.get("temperature", 0.0),
         max_tokens=openrouter_config.get("max_tokens", 1000),
+        reasoning_effort=openrouter_config.get("reasoning_effort"),
     )
 
 

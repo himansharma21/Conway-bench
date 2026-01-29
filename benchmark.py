@@ -62,9 +62,10 @@ def build_prompt(board_ascii: str) -> str:
     return f"""You are playing Conway's Game of Life. Given the current board state below, compute the next generation.
 
 Rules:
-- Any live cell (#) with 2-3 neighbors survives
-- Any dead cell (.) with exactly 3 neighbors becomes alive
+- Any live cell (#) with 2-3 live neighbors survives
+- Any dead cell (.) with exactly 3 live neighbors becomes alive
 - All other cells die or stay dead
+- Neighbors are the 8 adjacent cells (horizontal, vertical, and diagonal)
 - Cells outside the grid boundaries are considered dead
 
 Current board state:
@@ -72,7 +73,13 @@ Current board state:
 {board_ascii}
 ```
 
-Provide only the next generation board in the same ASCII format, with no additional explanation. Use '#' for live cells and '.' for dead cells."""
+Think through this carefully. For each cell, count its live neighbors and apply the rules.
+
+After your reasoning, output ONLY the final board in a code block like this:
+```
+<your board here>
+```
+Use '#' for live cells and '.' for dead cells. The board must be the same dimensions as the input."""
 
 
 def extract_board_from_response(response: str) -> str:
