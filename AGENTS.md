@@ -26,8 +26,9 @@ Core Conway's Game of Life implementation:
 - `board_to_ascii(board)` - Converts numpy array to ASCII string (`#` = alive, `.` = dead)
 - `ascii_to_board(ascii_str)` - Parses ASCII string back to numpy array
 - `generate_random_board(rows, cols, density, seed)` - Creates random initial states
-- `calculate_accuracy(predicted, expected)` - Returns float 0.0-1.0
+- `calculate_accuracy(predicted, expected)` - Returns float 0.0-1.0 (simple cell accuracy)
 - `is_perfect_match(predicted, expected)` - Returns bool
+- `calculate_correctness(predicted, expected)` - Returns float 0.0-1.0 (geometric mean of F1_alive and F1_dead)
 
 ### api.py
 LLM provider abstraction:
@@ -151,7 +152,27 @@ Set `reasoning_effort` in config.json to "high", "medium", "low", or remove for 
    - Code blocks (regex, takes LAST match)
    - Lines containing only `.` and `#`
    - Falls back to full response
-4. **Scoring**: Cell-by-cell accuracy + perfect match boolean
-5. **Points**: Perfect match only; points = grid_size * grid_size
+4. **Scoring**:
+   - `cell_accuracy`: Simple percentage of cells correctly predicted
+   - `correctness`: Geometric mean of F1_alive and F1_dead (see below)
+   - `perfect_match`: Boolean for exact match
+5. **Points**: `correctness * grid_size²` (continuous scoring, not binary)
 6. **Cost**: Per-test cost from OpenRouter response (when available), summed across the run
 7. **Seeds**: Fixed seeds ensure reproducible test cases across runs
+
+## Correctness Scoring
+
+The `correctness` metric uses the geometric mean of F1 scores for alive and dead cells:
+
+```
+correctness = sqrt(F1_alive * F1_dead)
+```
+
+This approach:
+- Handles class imbalance (typically ~30% alive, ~70% dead)
+- Penalizes models that exploit imbalance (e.g., predicting all-dead gives F1_alive=0, thus correctness=0)
+- Provides continuous scoring to reduce run-to-run variance compared to binary perfect-match scoring
+
+Edge cases:
+- If expected has no alive cells: F1_alive = 1.0 if predicted also has none, else 0.0
+- If expected has no dead cells: F1_dead = 1.0 if predicted also has none, else 0.0

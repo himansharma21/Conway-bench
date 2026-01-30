@@ -19,6 +19,7 @@ from conway import (
     generate_random_board,
     calculate_accuracy,
     is_perfect_match,
+    calculate_correctness,
 )
 from api import LLMProvider, load_config, create_provider
 
@@ -35,8 +36,9 @@ class TestResult:
     expected_board: str
     predicted_board: str
     cell_accuracy: float
+    correctness: float
     perfect_match: bool
-    points_awarded: int
+    points_awarded: float
     max_points: int
     cost: float
     prompt_tokens: int
@@ -55,7 +57,7 @@ class BenchmarkResult:
     overall_accuracy: float
     perfect_matches: int
     total_tests: int
-    points_earned: int
+    points_earned: float
     max_points: int
     total_cost: float
     test_type: str
@@ -225,7 +227,7 @@ def run_advanced_benchmark(
     print("-" * 50)
     print(f"Overall accuracy: {overall_accuracy:.2%}")
     print(f"Perfect matches: {perfect_matches}/{len(results)}")
-    print(f"Points: {points_earned}/{max_points}")
+    print(f"Points: {points_earned:.2f}/{max_points}")
     print(f"Total cost: ${total_cost:.4f}")
     print(f"Results saved to: {output_path}")
 
@@ -285,9 +287,10 @@ def run_single_test(
 
     # Calculate metrics
     accuracy = calculate_accuracy(predicted, expected)
+    correctness = calculate_correctness(predicted, expected)
     perfect = is_perfect_match(predicted, expected)
     max_points = rows * cols
-    points_awarded = max_points if perfect else 0
+    points_awarded = correctness * max_points
 
     return TestResult(
         test_type=test_type,
@@ -299,6 +302,7 @@ def run_single_test(
         expected_board=expected_ascii,
         predicted_board=predicted_ascii,
         cell_accuracy=accuracy,
+        correctness=correctness,
         perfect_match=perfect,
         points_awarded=points_awarded,
         max_points=max_points,
@@ -381,7 +385,7 @@ def run_benchmark(
     print("-" * 50)
     print(f"Overall accuracy: {overall_accuracy:.2%}")
     print(f"Perfect matches: {perfect_matches}/{len(results)}")
-    print(f"Points: {points_earned}/{max_points}")
+    print(f"Points: {points_earned:.2f}/{max_points}")
     print(f"Total cost: ${total_cost:.4f}")
     print(f"Results saved to: {output_path}")
 
@@ -413,7 +417,7 @@ def print_detailed_results(result: BenchmarkResult) -> None:
     print(f"DETAILED RESULTS - Model: {result.model}")
     print(f"Test type: {result.test_type}")
     print(f"Timestamp: {result.timestamp}")
-    print(f"Points: {result.points_earned}/{result.max_points}")
+    print(f"Points: {result.points_earned:.2f}/{result.max_points}")
     print(f"Total cost: ${result.total_cost:.4f}")
     print("=" * 70)
 
@@ -421,8 +425,9 @@ def print_detailed_results(result: BenchmarkResult) -> None:
         print(f"\nTest {i}: {r.difficulty} ({r.grid_size}, seed={r.seed})")
         print(f"  Density: {r.density}")
         print(f"  Cell accuracy: {r.cell_accuracy:.2%}")
+        print(f"  Correctness: {r.correctness:.2%}")
         print(f"  Perfect match: {r.perfect_match}")
-        print(f"  Points: {r.points_awarded}/{r.max_points}")
+        print(f"  Points: {r.points_awarded:.2f}/{r.max_points}")
         print(f"  Cost: ${r.cost:.4f}")
         print(f"  Response time: {r.response_time:.2f}s")
 

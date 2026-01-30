@@ -150,3 +150,74 @@ def is_perfect_match(predicted: np.ndarray, expected: np.ndarray) -> bool:
     if predicted.shape != expected.shape:
         return False
     return np.array_equal(predicted, expected)
+
+
+def calculate_correctness(predicted: np.ndarray, expected: np.ndarray) -> float:
+    """
+    Calculate correctness score using geometric mean of F1 scores for alive and dead cells.
+
+    This metric handles class imbalance by computing F1 for both classes separately,
+    then taking the geometric mean. The geometric mean ensures that poor performance
+    on either class (e.g., predicting all-dead) results in a low score.
+
+    Args:
+        predicted: The predicted board state (2D numpy array, 1=alive, 0=dead)
+        expected: The expected/correct board state
+
+    Returns:
+        Float between 0.0 and 1.0 representing correctness
+    """
+    if predicted.shape != expected.shape:
+        return 0.0
+
+    pred_flat = predicted.flatten()
+    exp_flat = expected.flatten()
+
+    # F1 for alive cells (class 1)
+    tp_alive = np.sum((pred_flat == 1) & (exp_flat == 1))
+    fp_alive = np.sum((pred_flat == 1) & (exp_flat == 0))
+    fn_alive = np.sum((pred_flat == 0) & (exp_flat == 1))
+
+    # F1 for dead cells (class 0)
+    tp_dead = np.sum((pred_flat == 0) & (exp_flat == 0))
+    fp_dead = np.sum((pred_flat == 0) & (exp_flat == 1))
+    fn_dead = np.sum((pred_flat == 1) & (exp_flat == 0))
+
+    # Calculate F1 for alive cells with edge case handling
+    total_expected_alive = tp_alive + fn_alive
+    total_predicted_alive = tp_alive + fp_alive
+
+    if total_expected_alive == 0:
+        # No alive cells in expected: perfect if none predicted, else 0
+        f1_alive = 1.0 if total_predicted_alive == 0 else 0.0
+    elif total_predicted_alive == 0:
+        # Expected some alive but predicted none
+        f1_alive = 0.0
+    else:
+        precision_alive = tp_alive / total_predicted_alive
+        recall_alive = tp_alive / total_expected_alive
+        if precision_alive + recall_alive > 0:
+            f1_alive = 2 * precision_alive * recall_alive / (precision_alive + recall_alive)
+        else:
+            f1_alive = 0.0
+
+    # Calculate F1 for dead cells with edge case handling
+    total_expected_dead = tp_dead + fn_dead
+    total_predicted_dead = tp_dead + fp_dead
+
+    if total_expected_dead == 0:
+        # No dead cells in expected: perfect if none predicted, else 0
+        f1_dead = 1.0 if total_predicted_dead == 0 else 0.0
+    elif total_predicted_dead == 0:
+        # Expected some dead but predicted none
+        f1_dead = 0.0
+    else:
+        precision_dead = tp_dead / total_predicted_dead
+        recall_dead = tp_dead / total_expected_dead
+        if precision_dead + recall_dead > 0:
+            f1_dead = 2 * precision_dead * recall_dead / (precision_dead + recall_dead)
+        else:
+            f1_dead = 0.0
+
+    # Geometric mean of both F1 scores
+    return float(np.sqrt(f1_alive * f1_dead))
