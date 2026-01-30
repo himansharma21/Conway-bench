@@ -72,6 +72,19 @@ From the CLI you can run:
 pytest test_conway.py -v
 ```
 
+### Compare Models (Advanced Tests)
+
+```bash
+python compare_models.py models.txt advanced_tests.txt --out model_comparison.csv
+```
+
+This will run the advanced tests for each model and write a CSV with:
+- Which tests were solved perfectly
+- Total completion/total tokens
+- Total cost
+- Final points and max points
+- Total time
+
 ## Configuration
 
 The `config.json` file contains all LLM settings:
@@ -143,6 +156,7 @@ conway-bench/
 ├── api.py               # LLM provider abstraction
 ├── conway.py            # Core Game of Life implementation
 ├── benchmark.py         # LLM benchmark runner
+├── compare_models.py    # Multi-model comparison runner
 ├── main.py              # Interactive CLI
 ├── test_conway.py       # Unit tests
 ├── requirements.txt     # Python dependencies

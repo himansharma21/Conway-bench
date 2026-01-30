@@ -11,6 +11,7 @@ Conway-bench/
 ├── conway.py          # Core game logic (next_state, board conversions)
 ├── api.py             # LLM API abstraction layer (OpenRouter)
 ├── benchmark.py       # Test runner, prompts, and scoring
+├── compare_models.py  # Multi-model comparison runner
 ├── main.py            # Interactive CLI
 ├── config.json        # API keys and model settings (gitignored)
 ├── test_conway.py     # Unit tests for game logic
@@ -46,6 +47,13 @@ Test execution and scoring:
 - `run_benchmark(config_path, output_path)` - Runs full simple test suite (9 cases)
 - `run_advanced_benchmark(tests_path, config_path, output_path)` - Runs advanced tests from a txt file
 - `print_detailed_results(result)` - Displays results with diff on failures
+
+### compare_models.py
+Multi-model comparison:
+- Reads a model list file (one model per line)
+- Reads an advanced tests file (`<grid_size> <density>`)
+- Runs all models against all tests
+- Writes a CSV with solved tests, token totals, cost total, points, and time
 
 **Prompt design**: The prompt encourages step-by-step reasoning and requests the final board in a code block. The extractor takes the LAST code block found, so reasoning output doesn't interfere.
 
