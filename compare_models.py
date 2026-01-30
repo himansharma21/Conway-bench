@@ -86,6 +86,17 @@ def run_model(
     }
 
 
+def generate_output_path(base_path: str, run_number: int, total_runs: int) -> str:
+    """Generate output path for a specific run."""
+    if total_runs == 1:
+        return base_path
+    # Split base path into name and extension
+    if "." in base_path:
+        name, ext = base_path.rsplit(".", 1)
+        return f"{name}_run{run_number}.{ext}"
+    return f"{base_path}_run{run_number}"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare models on advanced tests.")
     parser.add_argument("models_file", help="Path to a text file of model IDs (one per line).")
@@ -93,12 +104,18 @@ def main() -> None:
     parser.add_argument(
         "--out",
         default="model_comparison.csv",
-        help="Output CSV path (default: model_comparison.csv)",
+        help="Output CSV base path (default: model_comparison.csv)",
     )
     parser.add_argument(
         "--config",
         default="config.json",
         help="Path to config.json (default: config.json)",
+    )
+    parser.add_argument(
+        "--runs",
+        type=int,
+        default=1,
+        help="Number of times to run the full test suite (default: 1). Each run produces a separate CSV.",
     )
     args = parser.parse_args()
 
@@ -106,6 +123,8 @@ def main() -> None:
         raise SystemExit(f"Models file not found: {args.models_file}")
     if not os.path.exists(args.tests_file):
         raise SystemExit(f"Tests file not found: {args.tests_file}")
+    if args.runs < 1:
+        raise SystemExit("--runs must be at least 1")
 
     base_config = load_config(args.config)
     if not base_config.api_key:
@@ -114,29 +133,39 @@ def main() -> None:
     models = load_models(args.models_file)
     test_cases = load_advanced_test_cases(args.tests_file)
 
-    rows = []
-    for model in models:
-        print(f"Running model: {model}")
-        rows.append(run_model(model, test_cases, base_config))
+    for run_num in range(1, args.runs + 1):
+        if args.runs > 1:
+            print(f"\n{'='*50}")
+            print(f"RUN {run_num}/{args.runs}")
+            print(f"{'='*50}")
 
-    with open(args.out, "w", newline="") as f:
-        writer = csv.DictWriter(
-            f,
-            fieldnames=[
-                "model",
-                "correct_tests",
-                "completion_tokens_total",
-                "total_tokens_total",
-                "total_cost",
-                "points_earned",
-                "max_points",
-                "time_seconds",
-            ],
-        )
-        writer.writeheader()
-        writer.writerows(rows)
+        rows = []
+        for model in models:
+            print(f"Running model: {model}")
+            rows.append(run_model(model, test_cases, base_config))
 
-    print(f"Saved CSV to: {args.out}")
+        output_path = generate_output_path(args.out, run_num, args.runs)
+        with open(output_path, "w", newline="") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "model",
+                    "correct_tests",
+                    "completion_tokens_total",
+                    "total_tokens_total",
+                    "total_cost",
+                    "points_earned",
+                    "max_points",
+                    "time_seconds",
+                ],
+            )
+            writer.writeheader()
+            writer.writerows(rows)
+
+        print(f"Saved CSV to: {output_path}")
+
+    if args.runs > 1:
+        print(f"\nCompleted {args.runs} runs.")
 
 
 if __name__ == "__main__":
