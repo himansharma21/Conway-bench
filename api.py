@@ -28,6 +28,10 @@ class LLMResponse:
     content: str
     model: str
     response_time: float
+    cost: Optional[float] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
     error: Optional[str] = None
 
 
@@ -88,6 +92,7 @@ class OpenRouterProvider(LLMProvider):
             "messages": [{"role": "user", "content": prompt}],
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
+            "usage": {"include": True},
         }
 
         # Add reasoning parameter if configured
@@ -107,12 +112,34 @@ class OpenRouterProvider(LLMProvider):
             response.raise_for_status()
             response_data = response.json()
             content = response_data["choices"][0]["message"]["content"]
+            cost = None
+            prompt_tokens = None
+            completion_tokens = None
+            total_tokens = None
+            usage = response_data.get("usage")
+            if isinstance(usage, dict) and isinstance(usage.get("cost"), (int, float)):
+                cost = float(usage["cost"])
+            if isinstance(usage, dict):
+                if isinstance(usage.get("prompt_tokens"), int):
+                    prompt_tokens = usage["prompt_tokens"]
+                if isinstance(usage.get("completion_tokens"), int):
+                    completion_tokens = usage["completion_tokens"]
+                if isinstance(usage.get("total_tokens"), int):
+                    total_tokens = usage["total_tokens"]
             error = None
         except requests.exceptions.RequestException as e:
             content = ""
+            cost = None
+            prompt_tokens = None
+            completion_tokens = None
+            total_tokens = None
             error = str(e)
         except (KeyError, IndexError) as e:
             content = ""
+            cost = None
+            prompt_tokens = None
+            completion_tokens = None
+            total_tokens = None
             error = f"Invalid response format: {e}"
 
         response_time = time.time() - start_time
@@ -121,6 +148,10 @@ class OpenRouterProvider(LLMProvider):
             content=content,
             model=self.config.model,
             response_time=response_time,
+            cost=cost,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
             error=error,
         )
 

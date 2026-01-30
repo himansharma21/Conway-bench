@@ -9,6 +9,8 @@ import sys
 from api import load_config, create_provider
 from benchmark import (
     run_benchmark,
+    run_advanced_benchmark,
+    load_advanced_test_cases,
     run_single_test,
     build_prompt,
     extract_board_from_response,
@@ -47,11 +49,12 @@ def print_menu():
     """Print the main menu."""
     print("Main Menu:")
     print("-" * 40)
-    print("  1. Run single test")
-    print("  2. Run full benchmark")
+    print("  1. Run simple test")
+    print("  2. Run simple benchmark")
     print("  3. Preview a test case (no LLM)")
-    print("  4. Show current configuration")
-    print("  5. Exit")
+    print("  4. Run advanced benchmark (from txt file)")
+    print("  5. Show current configuration")
+    print("  6. Exit")
     print("-" * 40)
 
 
@@ -84,7 +87,7 @@ def get_seed() -> int:
 
 def run_single_test_interactive():
     """Run a single test with user-selected parameters."""
-    print("\n--- Single Test ---\n")
+    print("\n--- Simple Test ---\n")
 
     # Check config
     if not os.path.exists("config.json"):
@@ -148,7 +151,7 @@ def run_single_test_interactive():
 
 def run_full_benchmark_interactive():
     """Run the full benchmark suite."""
-    print("\n--- Full Benchmark ---\n")
+    print("\n--- Simple Benchmark ---\n")
 
     # Check config
     if not os.path.exists("config.json"):
@@ -178,6 +181,73 @@ def run_full_benchmark_interactive():
 
     print()
     result = run_benchmark()
+    print_detailed_results(result)
+
+    input("\nPress Enter to continue...")
+
+
+def run_advanced_benchmark_interactive():
+    """Run the advanced benchmark suite from a text file."""
+    print("\n--- Advanced Benchmark ---\n")
+
+    # Check config
+    if not os.path.exists("config.json"):
+        print("Error: config.json not found.")
+        input("\nPress Enter to continue...")
+        return
+
+    try:
+        config = load_config()
+        if not config.api_key:
+            print("Error: API key not set in config.json.")
+            input("\nPress Enter to continue...")
+            return
+    except Exception as e:
+        print(f"Error loading config: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    tests_path = input("Enter path to advanced tests txt file: ").strip()
+    if not tests_path:
+        print("No file provided.")
+        input("\nPress Enter to continue...")
+        return
+    if not os.path.exists(tests_path):
+        print("File not found.")
+        input("\nPress Enter to continue...")
+        return
+
+    try:
+        test_cases = load_advanced_test_cases(tests_path)
+    except Exception as e:
+        print(f"Error loading advanced tests: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\nTest summary:")
+    total_points = 0
+    for idx, (size, density) in enumerate(test_cases, 1):
+        points = size * size
+        total_points += points
+        print(f"  {idx}. size={size}x{size}, density={density}, points={points}")
+    print(f"Total possible points: {total_points}")
+
+    print(f"Model: {config.model}")
+    confirm = input("\nProceed? (y/n): ").strip().lower()
+
+    if confirm != "y":
+        print("Cancelled.")
+        input("\nPress Enter to continue...")
+        return
+
+    print()
+    try:
+        result = run_advanced_benchmark(tests_path=tests_path, show_summary=False)
+    except Exception as e:
+        print(f"Error running advanced benchmark: {e}")
+        input("\nPress Enter to continue...")
+        return
+
     print_detailed_results(result)
 
     input("\nPress Enter to continue...")
@@ -260,7 +330,7 @@ def main():
         print_header()
         print_menu()
 
-        choice = input("\nEnter choice (1-5): ").strip()
+        choice = input("\nEnter choice (1-6): ").strip()
 
         if choice == "1":
             run_single_test_interactive()
@@ -269,12 +339,14 @@ def main():
         elif choice == "3":
             preview_test_case()
         elif choice == "4":
-            show_configuration()
+            run_advanced_benchmark_interactive()
         elif choice == "5":
+            show_configuration()
+        elif choice == "6":
             print("\nGoodbye!")
             sys.exit(0)
         else:
-            print("\nInvalid choice. Please enter 1-5.")
+            print("\nInvalid choice. Please enter 1-6.")
             input("Press Enter to continue...")
 
 

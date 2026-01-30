@@ -1,0 +1,6 @@
+model,correct_tests,completion_tokens_total,total_tokens_total,total_cost,points_earned,max_points,time_seconds
+openai/gpt-oss-120b,1:4x4@0.25,2157,2394,0.0017007,16.0,16,1.685572862625122
+z-ai/glm-4.7-flash,1:4x4@0.25,3068,3243,0.00123921,16.0,16,62.7854483127594
+google/gemini-3-flash-preview,1:4x4@0.25,9614,9794,0.028932,16.0,16,55.585280418395996
+anthropic/claude-haiku-4.5,1:4x4@0.25,2618,2844,0.013316,16.0,16,11.578627347946167
+minimax/minimax-m2.1,1:4x4@0.25,2322,2531,0.00284385,16.0,16,7.928694486618042
