@@ -18,7 +18,7 @@ Presents grid states as ASCII text and asks LLMs to compute the next generation.
 **Expected output:**
 ```
 ##.
-##.
+###
 ##.
 ```
 
