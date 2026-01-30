@@ -93,18 +93,15 @@ The `config.json` file contains all LLM settings:
 |---------|-------------|---------|
 | `api_key` | Your OpenRouter API key | - |
 | `model` | Model identifier | ~Gemini 3 Flash tier |
-| `temperature` | Sampling temperature | 0.7 |
+| `temperature` | Sampling temperature | 0 |
 | `max_tokens` | Maximum response tokens | 32000 |
 
 ### Available Models
 
 You can use any model available on OpenRouter. Some options:
-- `anthropic/claude-3.5-sonnet`
-- `anthropic/claude-3-opus`
-- `openai/gpt-4o`
-- `openai/gpt-4-turbo`
-- `google/gemini-pro`
-- `meta-llama/llama-3.1-70b-instruct`
+- `anthropic/claude-4.5-sonnet`
+- `anthropic/claude-4.5-opus`
+- `google/gemini-3-flash-preview`
 
 See [OpenRouter models](https://openrouter.ai/models) for the full list.
 
