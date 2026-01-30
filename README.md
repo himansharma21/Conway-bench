@@ -89,12 +89,12 @@ This will run the advanced tests for each model and write a CSV with:
 
 The `config.json` file contains all LLM settings:
 
-| Setting | Description | Default |
+| Setting | Description | Recommended |
 |---------|-------------|---------|
-| `api_key` | Your OpenRouter API key | (empty) |
-| `model` | Model identifier | `anthropic/claude-3.5-sonnet` |
-| `temperature` | Sampling temperature | `0.0` |
-| `max_tokens` | Maximum response tokens | `1000` |
+| `api_key` | Your OpenRouter API key | - |
+| `model` | Model identifier | ~Gemini 3 Flash tier |
+| `temperature` | Sampling temperature | 0.7 |
+| `max_tokens` | Maximum response tokens | 32000 |
 
 ### Available Models
 
@@ -163,26 +163,3 @@ conway-bench/
 ├── PROPOSAL.md          # Design specification
 └── README.md            # This file
 ```
-
-## Core Functions
-
-### `conway.py`
-
-- `next_state(board)` - Compute the next generation
-- `board_to_ascii(board)` - Convert board to ASCII string
-- `ascii_to_board(ascii_str)` - Parse ASCII back to board array
-- `generate_random_board(rows, cols, density, seed)` - Generate random initial state
-- `calculate_accuracy(predicted, expected)` - Calculate cell accuracy
-- `is_perfect_match(predicted, expected)` - Check for exact match
-
-### `benchmark.py`
-
-- `run_benchmark()` - Run the full benchmark suite
-- `run_advanced_benchmark()` - Run advanced tests from a txt file
-- `load_config()` - Load configuration from `config.json`
-- `query_llm(prompt)` - Send query to LLM via OpenRouter
-
-## See Also
-
-- [PROPOSAL.md](PROPOSAL.md) - Detailed design and API specification
-- [OpenRouter Documentation](https://openrouter.ai/docs)
